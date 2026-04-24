@@ -10,6 +10,7 @@ import { validateCreateShortInput } from "../validator";
 import { ShortCreator } from "../../short-creator/ShortCreator";
 import { logger } from "../../logger";
 import { Config } from "../../config";
+import { OrientationEnum } from "../../types/shorts";
 
 // todo abstract class
 export class APIRouter {
@@ -65,6 +66,59 @@ export class APIRouter {
           // Fallback for other errors
           res.status(400).json({
             error: "Invalid input",
+            message: error instanceof Error ? error.message : "Unknown error",
+          });
+        }
+      },
+    );
+
+    this.router.get(
+      "/video-suggestions",
+      async (req: ExpressRequest, res: ExpressResponse) => {
+        try {
+          const { searchTerms, duration, orientation } = req.query;
+
+          if (!searchTerms || typeof searchTerms !== "string") {
+            res.status(400).json({
+              error: "searchTerms query parameter is required",
+            });
+            return;
+          }
+
+          const durationNum = duration ? parseInt(duration as string, 10) : 30;
+          const orientationEnum =
+            (orientation as OrientationEnum) || OrientationEnum.portrait;
+
+          const terms = searchTerms
+            .split(",")
+            .map((term) => term.trim())
+            .filter(Boolean);
+
+          if (terms.length === 0) {
+            res.status(400).json({
+              error: "At least one search term is required",
+            });
+            return;
+          }
+
+          logger.info(
+            { terms, durationNum, orientationEnum },
+            "Getting video suggestions",
+          );
+
+          const suggestions = await this.shortCreator.getVideoSuggestions(
+            terms,
+            durationNum,
+            orientationEnum,
+          );
+
+          res.status(200).json({
+            suggestions,
+          });
+        } catch (error: unknown) {
+          logger.error(error, "Error getting video suggestions");
+          res.status(500).json({
+            error: "Failed to get video suggestions",
             message: error instanceof Error ? error.message : "Unknown error",
           });
         }
