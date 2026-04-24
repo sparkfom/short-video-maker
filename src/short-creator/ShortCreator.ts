@@ -10,7 +10,7 @@ import { Kokoro } from "./libraries/Kokoro";
 import { Remotion } from "./libraries/Remotion";
 import { Whisper } from "./libraries/Whisper";
 import { FFMpeg } from "./libraries/FFmpeg";
-import { PexelsAPI } from "./libraries/Pexels";
+import { PexelsAPI, type VideoSuggestion } from "./libraries/Pexels";
 import { Config } from "../config";
 import { logger } from "../logger";
 import { MusicManager } from "./music";
@@ -63,6 +63,29 @@ export class ShortCreator {
       this.processQueue();
     }
     return id;
+  }
+
+  public async getVideoSuggestions(
+    searchTerms: string[],
+    minDurationSeconds: number,
+    orientation: OrientationEnum = OrientationEnum.portrait,
+    limit: number = 5,
+  ): Promise<VideoSuggestion[]> {
+    try {
+      const suggestions = await this.pexelsApi.getSuggestions(
+        searchTerms,
+        minDurationSeconds,
+        [],
+        orientation,
+        5000,
+        0,
+        limit,
+      );
+      return suggestions;
+    } catch (error: unknown) {
+      logger.error(error, "Error getting video suggestions");
+      throw error;
+    }
   }
 
   private async processQueue(): Promise<void> {
