@@ -22,6 +22,7 @@ import type {
   MusicMoodEnum,
   MusicTag,
   MusicForVideo,
+  Video,
 } from "../types/shorts";
 
 export class ShortCreator {
@@ -160,12 +161,38 @@ export class ShortCreator {
       const captions = await this.whisper.CreateCaption(tempWavPath);
 
       await this.ffmpeg.saveToMp3(audioStream, tempMp3Path);
-      const video = await this.pexelsApi.findVideo(
-        scene.searchTerms,
-        audioLength,
-        excludeVideoIds,
-        orientation,
-      );
+
+      // Determine which video to use
+      let video: Video;
+
+      if (scene.videoUrl) {
+        // Use direct URL
+        logger.debug(`Using direct video URL: ${scene.videoUrl}`);
+        video = {
+          id: cuid(),
+          url: scene.videoUrl,
+          width: 1080,
+          height: 1920,
+        };
+      } else if (scene.videoId) {
+        // Fetch video by ID from Pexels
+        logger.debug(`Fetching video by ID from Pexels: ${scene.videoId}`);
+        const pexelsVideo = await this.pexelsApi.getVideoById(scene.videoId);
+        if (!pexelsVideo) {
+          throw new Error(
+            `Video with ID ${scene.videoId} not found in Pexels`,
+          );
+        }
+        video = pexelsVideo;
+      } else {
+        // Auto-select video (original behavior)
+        video = await this.pexelsApi.findVideo(
+          scene.searchTerms,
+          audioLength,
+          excludeVideoIds,
+          orientation,
+        );
+      }
 
       logger.debug(`Downloading video from ${video.url} to ${tempVideoPath}`);
 
