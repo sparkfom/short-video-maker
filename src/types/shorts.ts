@@ -35,7 +35,17 @@ export const sceneInput = z.object({
   searchTerms: z
     .array(z.string())
     .describe(
-      "Search term for video, 1 word, and at least 2-3 search terms should be provided for each scene. Make sure to match the overall context with the word - regardless what the video search result would be.",
+      "Search term for video, 1 word, and at least 2-3 search terms should be provided for each scene. Make sure to match the overall context with the word - regardless what the video search result is"
+    ),
+  videoId: z
+    .string()
+    .optional()
+    .describe("Optional: Pexels video ID to use instead of auto-selecting"),
+  videoUrl: z
+    .string()
+    .optional()
+    .describe(
+      "Optional: Direct URL to a video file to use instead of searching Pexels"
     ),
 });
 export type SceneInput = z.infer<typeof sceneInput>;
@@ -88,7 +98,7 @@ export const renderConfig = z.object({
     .number()
     .optional()
     .describe(
-      "For how long the video should be playing after the speech is done, in milliseconds. 1500 is a good value.",
+      "For how long the video should be playing after the speech is done, in milliseconds. 1500 is a good value."
     ),
   music: z
     .nativeEnum(MusicMoodEnum)
@@ -102,7 +112,7 @@ export const renderConfig = z.object({
     .string()
     .optional()
     .describe(
-      "Background color of the caption, a valid css color, default is blue",
+      "Background color of the caption, a valid css color, default is blue"
     ),
   voice: z
     .nativeEnum(VoiceEnum)
